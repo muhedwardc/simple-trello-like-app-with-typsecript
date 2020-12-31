@@ -1,3 +1,41 @@
+interface ValidatorInterface {
+    value: string | number;
+    required?: boolean;
+    minLength?: number;
+    maxLength?: number;
+    min?: number;
+    max?: number
+}
+
+function validate({ 
+    value, 
+    required, 
+    minLength, 
+    maxLength, 
+    min, 
+    max
+}: ValidatorInterface) {
+    let isValid = true;
+
+    if (required) {
+        isValid = isValid && value.toString().trim().length > 0;
+    }
+    if (minLength != null && typeof value === 'string') {
+        isValid = isValid && value.trim().length > minLength
+    }
+    if (maxLength != null && typeof value === 'string') {
+        isValid = isValid && value.trim().length < maxLength
+    }
+    if (min != null && typeof value === 'number') {
+        isValid = isValid && value > min;
+    }
+    if (max != null && typeof value === 'number') {
+        isValid = isValid && value <= max;
+    }
+
+    return isValid;
+}
+
 function autobind(_: any, _2: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
     const adjustedDecorator: PropertyDescriptor = {
@@ -47,11 +85,19 @@ class ProjectInput {
         const desc = this.descriptionInputEl.value;
         const people = this.peopleInputEl.value;
 
-        if (title.trim().length <= 0 || desc.trim().length <= 0 || parseInt(people.trim()) <= 0) {
+        const titleValidator: ValidatorInterface = { value: title, required: true}; 
+        const descValidator: ValidatorInterface = { value: desc, required: true, minLength: 8}; 
+        const peopleValidator: ValidatorInterface = { value: +people, required: true, min: 1, max: 10}; 
+
+        if (
+            validate(titleValidator) && 
+            validate(descValidator) && 
+            validate(peopleValidator)
+        ) {
+            return [title, desc, +people];
+        } else {
             alert('Invalid input, please try again!');
             return;
-        } else {
-            return [title, desc, +people];
         }
     }
 
