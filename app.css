@@ -24,10 +24,11 @@ label {
 input,
 textarea {
     font: inherit;
-    padding: 0.2rem 0.4rem;
+    padding: 8px;
     width: 100%;
     max-width: 30rem;
     border: 1px solid #ccc;
+    border-radius: 4px;
 }
 
 input:focus,
@@ -38,11 +39,17 @@ textarea:focus {
 
 button {
     font: inherit;
-    background: #ff0062;
-    border: 1px solid #ff0062;
+    background-color: #3273dc;
+    border-color: transparent;
+    border-width: 1px;
+    border-radius: 4px;
+    color: #fff;
     cursor: pointer;
-    color: white;
-    padding: 0.75rem 1rem;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 16px;
+    height: 48px;
 }
 
 button:focus {
@@ -51,8 +58,7 @@ button:focus {
 
 button:hover,
 button:active {
-    background: #a80041;
-    border-color: #a80041;
+    background-color: #276cda;
 }
 
 .projects {
@@ -112,16 +118,17 @@ button:active {
 }
 
 .droppable {
-background: #ffe3ee;
+    background: #ffe3ee;
 }
 
 #finished-projects .droppable {
-background: #d6e1ff;
+    background: #d6e1ff;
 }
 
 #user-input {
-margin: 1rem;
-padding: 1rem;
-border: 1px solid #ff0062;
-background: #f7f7f7;
+    border-radius: 4px;
+    margin: 1rem;
+    padding: 1rem;
+    border: 1px solid #3273dc;
+    background: #f7f7f7;
 }
