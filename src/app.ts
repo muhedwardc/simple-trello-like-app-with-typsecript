@@ -120,4 +120,34 @@ class ProjectInput {
     }
 }
 
+class ProjectList {
+    templateEl: HTMLTemplateElement;
+    hostEl: HTMLDivElement;
+    listEl: HTMLElement;
+
+    constructor(private type: 'onprogress' | 'done') {
+        this.templateEl = <HTMLTemplateElement>document.getElementById('project-list')!;
+        this.hostEl = <HTMLDivElement>document.getElementById('app')!;
+
+        const importedContentNode = document.importNode(this.templateEl.content, true);
+        this.listEl = <HTMLElement>importedContentNode.firstElementChild;
+        this.listEl.id = `${this.type}-projects`;
+
+        this.attach();
+        this.renderContent();
+    }
+
+    private renderContent() {
+        const listId = `${this.type}-projects-list`;
+        this.listEl.querySelector('ul')!.id = listId;
+        this.listEl.querySelector('h2')!.textContent = this.type.toUpperCase();
+    }
+
+    private attach() {
+        this.hostEl.insertAdjacentElement('beforeend', this.listEl);
+    }
+}
+
 const projectInput = new ProjectInput();
+const onprogressProjects = new ProjectList('onprogress');
+const doneProjects = new ProjectList('done');
