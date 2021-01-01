@@ -201,6 +201,11 @@ class ProjectInput extends ComponentRender<HTMLDivElement, HTMLFormElement>{
 class ProjectItem extends ComponentRender<HTMLDivElement, HTMLElement> {
     private project: Project;
 
+    get persons(): string {
+        const { people } = this.project;
+        return `${people} person${people > 1 ? 's' : ''}`
+    }
+
     constructor(project: Project, hostId: string) {
         super('single-project', hostId, false);
         this.project = project;
@@ -209,7 +214,7 @@ class ProjectItem extends ComponentRender<HTMLDivElement, HTMLElement> {
     configure() {
         this.el.classList.add(`${this.project.status}-${new Date().getTime()}`);
         this.setElTextContent('h2', this.project.title);
-        this.setElTextContent('h3', `${this.project.people} People${this.project.people > 1 ? 's' : ''}`);
+        this.setElTextContent('h3', `${this.persons} assigned`);
         this.setElTextContent('p', this.project.description);
     };
 
