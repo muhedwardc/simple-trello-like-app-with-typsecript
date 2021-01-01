@@ -1,3 +1,16 @@
+// Drag and drop
+interface Draggable {
+    dragStartHandler(event: DragEvent): void;
+    dragEndHandler(event: DragEvent): void;
+}
+
+interface DragTarget {
+    dragOverHandler(event: DragEvent): void;
+    dropHandler(event: DragEvent): void;
+    dragLeaveHandler(event: DragEvent): void;
+}
+
+
 interface ValidatorInterface {
     value: string | number;
     required?: boolean;
@@ -198,7 +211,7 @@ class ProjectInput extends ComponentRender<HTMLDivElement, HTMLFormElement>{
     }
 }
 
-class ProjectItem extends ComponentRender<HTMLDivElement, HTMLElement> {
+class ProjectItem extends ComponentRender<HTMLDivElement, HTMLElement> implements Draggable {
     private project: Project;
 
     get persons(): string {
@@ -209,13 +222,21 @@ class ProjectItem extends ComponentRender<HTMLDivElement, HTMLElement> {
     constructor(project: Project, hostId: string) {
         super('single-project', hostId, false);
         this.project = project;
+        this.configure();
+    };
+
+    @autobind
+    dragStartHandler(event: DragEvent) {
+        console.log(event);
+     };
+    dragEndHandler(_: DragEvent) { 
+        console.log('DragEnd')
     };
 
     configure() {
-        this.el.classList.add(`${this.project.status}-${new Date().getTime()}`);
-        this.setElTextContent('h2', this.project.title);
-        this.setElTextContent('h3', `${this.persons} assigned`);
-        this.setElTextContent('p', this.project.description);
+        this.el.draggable = true;
+        this.el.addEventListener('dragstart', this.dragStartHandler);
+        this.el.addEventListener('dragend', this.dragEndHandler);
     };
 
     private setElTextContent(selector: string, text: string) {
@@ -223,7 +244,10 @@ class ProjectItem extends ComponentRender<HTMLDivElement, HTMLElement> {
     }
 
     createElement(): HTMLElement {
-        this.configure();
+        this.el.classList.add(`${this.project.status}-${new Date().getTime()}`);
+        this.setElTextContent('h2', this.project.title);
+        this.setElTextContent('h3', `${this.persons} assigned`);
+        this.setElTextContent('p', this.project.description);
         return this.el;
     };
 
