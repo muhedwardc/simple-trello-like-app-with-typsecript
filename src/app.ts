@@ -86,7 +86,7 @@ class ProjectState extends State<Project> {
             title,
             description,
             people,
-            ProjectStatus.Onprogress
+            ProjectStatus.onprogress
         )
         this.projects.push(newProject);
         for (const listenerFn of this.listeners) {
@@ -125,7 +125,7 @@ abstract class ComponentRender<T extends HTMLElement, U extends HTMLElement> {
     abstract renderContent(): void;
 }
 
-enum ProjectStatus { Onprogress, Done }
+enum ProjectStatus { onprogress = 'onprogress', done = 'done' }
 
 class Project {
     constructor(
@@ -198,39 +198,65 @@ class ProjectInput extends ComponentRender<HTMLDivElement, HTMLFormElement>{
     }
 }
 
+class ProjectItem extends ComponentRender<HTMLDivElement, HTMLElement> {
+    private project: Project;
+
+    constructor(project: Project, hostId: string) {
+        super('single-project', hostId, false);
+        this.project = project;
+    };
+
+    configure() {
+        this.el.classList.add(`${this.project.status}-${new Date().getTime()}`);
+        this.setElTextContent('h2', this.project.title);
+        this.setElTextContent('h3', `${this.project.people} People${this.project.people > 1 ? 's' : ''}`);
+        this.setElTextContent('p', this.project.description);
+    };
+
+    private setElTextContent(selector: string, text: string) {
+        this.el.querySelector(selector)!.textContent = text;
+    }
+
+    createElement(): HTMLElement {
+        this.configure();
+        return this.el;
+    };
+
+    renderContent() {
+        this.hostEl.appendChild(this.createElement());
+    };
+}
+
 class ProjectList extends ComponentRender<HTMLDivElement, HTMLElement> {
     assignedProjects: Project[] = [];
 
-    constructor(private type: 'onprogress' | 'done') {
-        super('project-list', 'app', false, `${type}-projects`);
+    constructor(private type: ProjectStatus) {
+        super('project-list', 'app', false, `${ProjectStatus[type]}-projects`);
 
         this.configure();
         this.renderContent();
     }
 
     private renderProjects() {
-        const listEl = <HTMLUListElement>document.getElementById(`${this.type}-projects-list`)!;
+        const listId = `${ProjectStatus[this.type]}-projects-list`;
+        const listEl = <HTMLUListElement>document.getElementById(listId)!;
         listEl.innerHTML = '';
         for(const item of this.assignedProjects) {
-            const listItem = document.createElement('li');
-            listItem.textContent = item.title;
-            listEl?.appendChild(listItem);
+            const projectItem = new ProjectItem(item, listId);
+            projectItem.renderContent();
         }
     }
 
     renderContent() {
-        const listId = `${this.type}-projects-list`;
+        const listId = `${ProjectStatus[this.type]}-projects-list`;
         this.el.querySelector('ul')!.id = listId;
-        this.el.querySelector('h2')!.textContent = this.type.toUpperCase();
+        this.el.querySelector('h2')!.textContent = ProjectStatus[this.type].toUpperCase();
     }
 
     configure(){
         projectState.addListener((projects: Project[]) => {
             const filteredProjects = projects.filter(project => {
-                if (this.type === 'onprogress') {
-                    return project.status === ProjectStatus.Onprogress;
-                }
-                return project.status === ProjectStatus.Done;
+                return project.status === this.type;
             });
             this.assignedProjects = filteredProjects;
             this.renderProjects();
@@ -239,5 +265,5 @@ class ProjectList extends ComponentRender<HTMLDivElement, HTMLElement> {
 }
 
 const projectInput = new ProjectInput();
-const onprogressProjects = new ProjectList('onprogress');
-const doneProjects = new ProjectList('done');
+const onprogressProjects = new ProjectList(ProjectStatus.onprogress);
+const doneProjects = new ProjectList(ProjectStatus.done);
