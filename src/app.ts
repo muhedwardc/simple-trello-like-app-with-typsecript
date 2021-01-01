@@ -20,6 +20,11 @@ interface ValidatorInterface {
     max?: number
 }
 
+interface ValidationResponse {
+    valid: boolean,
+    message: string
+}
+
 function validate({ 
     value, 
     required, 
@@ -27,26 +32,32 @@ function validate({
     maxLength, 
     min, 
     max
-}: ValidatorInterface) {
-    let isValid = true;
+}: ValidatorInterface): ValidationResponse {
+    let valid = true;
+    let message = '';
 
-    if (required) {
-        isValid = isValid && value.toString().trim().length > 0;
+    if (required && value.toString().trim().length <= 0) {
+        valid = false;
+        message = 'required';
     }
-    if (minLength != null && typeof value === 'string') {
-        isValid = isValid && value.trim().length > minLength
+    if (minLength != null && typeof value === 'string' && value.trim().length < minLength) {
+        valid = false;
+        message = `minimum ${minLength} character${minLength > 1 ? 's' : ''}`;
     }
-    if (maxLength != null && typeof value === 'string') {
-        isValid = isValid && value.trim().length < maxLength
+    if (maxLength != null && typeof value === 'string' && value.trim().length > maxLength) {
+        valid = false;
+        message = `minimum ${maxLength} character${maxLength > 1 ? 's' : ''}`;
     }
-    if (min != null && typeof value === 'number') {
-        isValid = isValid && value >= min;
+    if (min != null && typeof value === 'number' && value < min) {
+        valid = false;
+        message = `should more than or equal to ${min}`;
     }
-    if (max != null && typeof value === 'number') {
-        isValid = isValid && value <= max;
+    if (max != null && typeof value === 'number' && value > max) {
+        valid = false;
+        message = `should lower than or equal to ${max}`;
     }
 
-    return isValid;
+    return { valid, message };
 }
 
 function autobind(_: any, _2: string, descriptor: PropertyDescriptor) {
@@ -95,13 +106,25 @@ class ProjectState extends State<Project> {
 
     addProject(title: string, description: string, people: number) {
         const newProject = new Project(
-            new Date().getTime(),
+            new Date().getTime().toString(),
             title,
             description,
             people,
             ProjectStatus.onprogress
         )
         this.projects.push(newProject);
+        this.updateListeners();
+    }
+
+    moveProject(projectId: string, newStatus: ProjectStatus) {
+        const project = this.projects.find(project => project.id === projectId);
+        if (project && project.status !== ProjectStatus[newStatus]) {
+            project.status = ProjectStatus[newStatus];
+            this.updateListeners();
+        }
+    }
+
+    private updateListeners() {
         for (const listenerFn of this.listeners) {
             listenerFn(this.projects.slice());
         }
@@ -142,7 +165,7 @@ enum ProjectStatus { onprogress = 'onprogress', done = 'done' }
 
 class Project {
     constructor(
-        public id: number, 
+        public id: string, 
         public title: string, 
         public description: string, 
         public people: number,
@@ -180,15 +203,19 @@ class ProjectInput extends ComponentRender<HTMLDivElement, HTMLFormElement>{
         const descValidator: ValidatorInterface = { value: desc, required: true, minLength: 8}; 
         const peopleValidator: ValidatorInterface = { value: +people, required: true, min: 1, max: 10}; 
 
-        if (
-            validate(titleValidator) && 
-            validate(descValidator) && 
-            validate(peopleValidator)
-        ) {
-            return [title, desc, +people];
+        const postfix = `, please try again!`;
+        const titleValidation = validate(titleValidator);
+        const descValidation = validate(descValidator);
+        const peopleValidation = validate(peopleValidator);
+
+        if (titleValidation.message || !titleValidation.valid) {
+            alert(`title error: ${titleValidation.message}${postfix}`)
+        } else if (descValidation.message || !descValidation.valid) {
+            alert(`description error: ${descValidation.message}${postfix}`)
+        } else if (peopleValidation.message || !peopleValidation.valid) {
+            alert(`people error: ${peopleValidation.message}${postfix}`)
         } else {
-            alert('Invalid input, please try again!');
-            return;
+            return [title, desc, +people];
         }
     }
 
@@ -227,7 +254,7 @@ class ProjectItem extends ComponentRender<HTMLDivElement, HTMLElement> implement
 
     @autobind
     dragStartHandler(event: DragEvent) {
-        event.dataTransfer!.setData('text/plain', this.project.id.toString());
+        event.dataTransfer!.setData('text/plain', this.project.id);
         event.dataTransfer!.effectAllowed = 'move';
     };
 
@@ -280,8 +307,10 @@ class ProjectList extends ComponentRender<HTMLDivElement, HTMLElement> implement
         }
     }
 
+    @autobind
     dropHandler(event: DragEvent) {
-        console.log(event);
+        const dataId = event.dataTransfer!.getData('text/plain');
+        projectState.moveProject(dataId, ProjectStatus[this.type]);
     }
 
     @autobind
