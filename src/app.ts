@@ -27,7 +27,7 @@ function validate({
         isValid = isValid && value.trim().length < maxLength
     }
     if (min != null && typeof value === 'number') {
-        isValid = isValid && value > min;
+        isValid = isValid && value >= min;
     }
     if (max != null && typeof value === 'number') {
         isValid = isValid && value <= max;
@@ -188,7 +188,13 @@ class ProjectList {
         this.listEl.id = `${this.type}-projects`;
 
         projectState.addListener((projects: Project[]) => {
-            this.assignedProjects = projects;
+            const filteredProjects = projects.filter(project => {
+                if (this.type === 'onprogress') {
+                    return project.status === ProjectStatus.Onprogress;
+                }
+                return project.status === ProjectStatus.Done;
+            });
+            this.assignedProjects = filteredProjects;
             this.renderProjects();
         });
 
@@ -198,6 +204,7 @@ class ProjectList {
 
     private renderProjects() {
         const listEl = <HTMLUListElement>document.getElementById(`${this.type}-projects-list`)!;
+        listEl.innerHTML = '';
         for(const item of this.assignedProjects) {
             const listItem = document.createElement('li');
             listItem.textContent = item.title;
